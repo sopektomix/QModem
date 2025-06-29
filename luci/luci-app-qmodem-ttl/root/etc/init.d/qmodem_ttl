@@ -8,7 +8,7 @@ USE_PROCD=1
 start_service()
 {
     config_load 'qmodem_ttl'
-    config_get enable 'main' 'enable' '0'
+    config_get enable 'main' 'enable' '1'
     if [ "$enable" == 0 ]; then
         return
     fi
@@ -24,7 +24,11 @@ set_if_ttl()
     comment="modem_ttl"
     touch /etc/firewall.d/qmodem_ttl
     echo "$IPT -t mangle -A POSTROUTING -j TTL --ttl-set $ttl -m comment --comment $comment" >> /etc/firewall.d/qmodem_ttl
+    echo "$IPT -t mangle -A PREROUTING -j TTL --ttl-set $ttl -m comment --comment $comment" >> /etc/firewall.d/qmodem_ttl
+    echo "$IPT -t mangle -I POSTROUTING -o wwan0 -j TTL --ttl-set $ttl -m comment --comment $comment" >> /etc/firewall.d/qmodem_ttl
+    echo "$IPT -t mangle -I PREROUTING -i wwan0 -j TTL --ttl-set $ttl -m comment --comment $comment" >> /etc/firewall.d/qmodem_ttl
     echo "$IPT6 -t mangle -A POSTROUTING -j HL --hl-set $ttl -m comment --comment $comment" >> /etc/firewall.d/qmodem_ttl
+    echo "$IPT6 -t mangle -A PREROUTING -j HL --hl-set $ttl -m comment --comment $comment" >> /etc/firewall.d/qmodem_ttl
     /etc/firewall.d/qmodem_ttl
     /etc/init.d/firewall restart
     [ -d /sys/kernel/debug/ecm/ ] && /etc/init.d/qca-nss-ecm stop # disable nss offload
